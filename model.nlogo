@@ -95,7 +95,11 @@ to go
   ask turtles [
     turtle-move
     turtle-eat
-    pay-tax
+
+    if ticks mod 12 = 0 [
+      pay-tax
+    ]
+
     set age (age + 1)
     ;; ! how die would work on this way?
     if (sugar <= 0 or spice <= 0) or age > max-age [
@@ -104,12 +108,17 @@ to go
     ]
     run visualization
   ]
+
+  if ticks mod 12 = 0 [
+    distribute-taxes
+  ]
+
   update-lorenz-and-gini
   tick
 end
 
 ;; ! turtle-move does not consider patches with-max pspice
-to turtle-move ;; turtle procedure
+to turtle-move ;; turtle procedureq
   ;; retreiving some agent's values so the patch can use them
   let w1 sugar
   let w2 spice
@@ -134,8 +143,8 @@ end
 
 to pay-tax ;; turtle procedure
   ;; pay to the government a tax-percentage
-  let tax-sugar round (sugar * tax-percentage)
-  let tax-spice round (spice * tax-percentage)
+  let tax-sugar round (sugar * tax-percentage / 100)
+  let tax-spice round (spice * tax-percentage / 100)
 
   set tax-revenue-sugar tax-revenue-sugar + tax-sugar
   set tax-revenue-spice tax-revenue-spice + tax-spice
@@ -177,6 +186,27 @@ to patch-growback ;; patch procedure
   ;; gradually grow back all of the sugar for the patch
   set psugar min (list max-psugar (psugar + 1))
   set pspice min (list max-pspice (pspice + 1))
+end
+
+to distribute-taxes
+  ;; percentage of distribution
+  let percentage-dist 1
+
+  ;; ! should i make an amount computation or should i make it a free variable
+  let amount-dist-sugar round (tax-revenue-sugar * percentage-dist / count turtles)
+  let amount-dist-spice round (tax-revenue-spice * percentage-dist / count turtles)
+
+  ;; ! how can i sort the turtles by sugar and spice
+  foreach sort-on [sugar] turtles [
+    t -> ask t [
+      if tax-revenue-sugar - amount-dist-sugar >= 0 and tax-revenue-spice - amount-dist-spice >= 0 [
+        set sugar (sugar + amount-dist-sugar)
+        set spice (spice + amount-dist-spice)
+        set tax-revenue-sugar (tax-revenue-sugar - amount-dist-sugar)
+        set tax-revenue-spice (tax-revenue-spice - amount-dist-spice)
+      ]
+    ]
+  ]
 end
 
 ;; ! i think this should be updated...
@@ -351,7 +381,7 @@ initial-population
 initial-population
 0
 1000
-158.0
+102.0
 1
 1
 NIL
@@ -433,11 +463,11 @@ NIL
 0.0
 10.0
 true
-false
+true
 "" ""
 PENS
-"default" 1.0 0 -16777216 true "" "plot tax-revenue-sugar"
-"pen-1" 1.0 0 -7500403 true "" "plot tax-revenue-spice"
+"sugar" 1.0 0 -2064490 true "" "plot tax-revenue-sugar"
+"spice" 1.0 0 -7858858 true "" "plot tax-revenue-spice"
 
 @#$#@#$#@
 ## WHAT IS IT?
