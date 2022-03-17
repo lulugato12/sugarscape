@@ -5,6 +5,8 @@ globals [
   minimum-spice-endowment
   maximum-sugar-endowment ;; ! i removed the sliders...
   minimum-sugar-endowment
+  tax-revenue-sugar
+  tax-revenue-spice
 ]
 
 turtles-own [
@@ -30,17 +32,14 @@ patches-own [
 ;;
 
 to setup
+  clear-all
+
   ;; setting the parameters of the turtles' objective function
   set maximum-spice-endowment 25
   set minimum-spice-endowment 5
   set maximum-sugar-endowment 25
   set minimum-sugar-endowment 5
 
-  if maximum-sugar-endowment <= minimum-sugar-endowment [
-    user-message "Oops: the maximum-sugar-endowment must be larger than the minimum-sugar-endowment"
-    stop
-  ]
-  clear-all
   create-turtles initial-population [ turtle-setup ]
   setup-patches
   update-lorenz-and-gini
@@ -96,6 +95,7 @@ to go
   ask turtles [
     turtle-move
     turtle-eat
+    pay-tax
     set age (age + 1)
     ;; ! how die would work on this way?
     if (sugar <= 0 or spice <= 0) or age > max-age [
@@ -130,6 +130,18 @@ to turtle-move ;; turtle procedure
     ;; if there are any such patches move to one of the patches that is closest
     move-to min-one-of possible-winners [distance myself]
   ]
+end
+
+to pay-tax ;; turtle procedure
+  ;; pay to the government a tax-percentage
+  let tax-sugar round (sugar * tax-percentage)
+  let tax-spice round (spice * tax-percentage)
+
+  set tax-revenue-sugar tax-revenue-sugar + tax-sugar
+  set tax-revenue-spice tax-revenue-spice + tax-spice
+
+  set sugar (sugar - tax-sugar)
+  set spice (spice - tax-spice)
 end
 
 to turtle-eat ;; turtle procedure
@@ -252,10 +264,10 @@ ticks
 30.0
 
 BUTTON
-5
-170
-85
-210
+10
+90
+90
+130
 NIL
 setup
 NIL
@@ -270,9 +282,9 @@ NIL
 
 BUTTON
 100
-170
+90
 190
-210
+130
 NIL
 go
 T
@@ -287,9 +299,9 @@ NIL
 
 BUTTON
 200
-170
+90
 290
-210
+130
 go once
 go
 NIL
@@ -304,9 +316,9 @@ NIL
 
 CHOOSER
 10
-225
+140
 290
-270
+185
 visualization
 visualization
 "no-visualization" "color-agents-by-vision" "color-agents-by-metabolism"
@@ -339,7 +351,7 @@ initial-population
 initial-population
 0
 1000
-68.0
+158.0
 1
 1
 NIL
@@ -382,31 +394,50 @@ false
 PENS
 "default" 1.0 0 -13345367 true "" "plot (gini-index-reserve / count turtles) * 2"
 
-SLIDER
-5
-90
-285
-123
-maximum-sugar-endowment
-maximum-sugar-endowment
-0
-200
-25.0
-1
-1
-NIL
-HORIZONTAL
-
 SWITCH
 10
-285
+195
 122
-318
+228
 welfare-on
 welfare-on
 0
 1
 -1000
+
+SLIDER
+10
+50
+290
+83
+tax-percentage
+tax-percentage
+0
+100
+10.0
+1
+1
+NIL
+HORIZONTAL
+
+PLOT
+945
+10
+1145
+160
+Tax Revenue
+NIL
+NIL
+0.0
+10.0
+0.0
+10.0
+true
+false
+"" ""
+PENS
+"default" 1.0 0 -16777216 true "" "plot tax-revenue-sugar"
+"pen-1" 1.0 0 -7500403 true "" "plot tax-revenue-spice"
 
 @#$#@#$#@
 ## WHAT IS IT?
