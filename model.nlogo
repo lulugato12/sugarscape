@@ -7,13 +7,17 @@ globals [
   minimum-sugar-endowment
   tax-revenue-sugar
   tax-revenue-spice
+  third-good
+  percentage-dist
 ]
 
 turtles-own [
-  sugar           ;; the amount of sugar this turtle has
-  spice           ;; the amount of spice this turtle has
+  sugar           ;; the amount of sugar the turtle owns
+  spice           ;; the amount of spice the turtle owns
+  good            ;; the amount of the third good the turtle owns
   metabolism_su   ;; the amount of sugar that each turtle loses per tick
   metabolism_sp   ;; the amount of spice that each turtle loses per tick
+  metabolism_good ;;
   vision          ;; the distance that this turtle can see in the horizontal and vertical directions
   vision-points   ;; the points that this turtle can see in relative to it's current position (based on vision)
   age             ;; the current age of this turtle (in ticks)
@@ -35,10 +39,12 @@ to setup
   clear-all
 
   ;; setting the parameters of the turtles' objective function
+  set percentage-dist 1
   set maximum-spice-endowment 25
   set minimum-spice-endowment 5
   set maximum-sugar-endowment 25
   set minimum-sugar-endowment 5
+  set third-good 15
 
   create-turtles initial-population [ turtle-setup ]
   setup-patches
@@ -48,10 +54,11 @@ end
 
 to turtle-setup ;; turtle procedure
   set color red
-  set shape "circle"
+  set shape "person"
   move-to one-of patches with [not any? other turtles-here]
   set sugar random-in-range minimum-sugar-endowment maximum-sugar-endowment
   set spice random-in-range minimum-spice-endowment maximum-spice-endowment
+  set good third-good
   set metabolism_su random-in-range 1 4
   set metabolism_sp random-in-range 1 4
   set max-age random-in-range 60 100
@@ -117,11 +124,12 @@ to go
   tick
 end
 
-;; ! turtle-move does not consider patches with-max pspice
+;; ! turtle has w3 and m3 hardcoded
 to turtle-move ;; turtle procedureq
   ;; retreiving some agent's values so the patch can use them
   let w1 sugar
   let w2 spice
+  let w3 good
   let m1 metabolism_su
   let m2 metabolism_sp
   let possible-winners []
@@ -130,7 +138,7 @@ to turtle-move ;; turtle procedureq
   let move-candidates (patch-set patch-here (patches at-points vision-points) with [not any? turtles-here])
 
   if-else welfare-on [
-    set possible-winners move-candidates with-max [welfare-eq (w1 + psugar) (w2 + pspice) m1 m2]
+    set possible-winners move-candidates with-max [welfare-eq (w1 + psugar) (w2 + pspice) w3 m1 m2 1]
   ][
     set possible-winners move-candidates with-max [psugar]
   ]
@@ -189,9 +197,6 @@ to patch-growback ;; patch procedure
 end
 
 to distribute-taxes
-  ;; percentage of distribution
-  let percentage-dist 1
-
   ;; ! should i make an amount computation or should i make it a free variable
   let amount-dist-sugar round (tax-revenue-sugar * percentage-dist / count turtles)
   let amount-dist-spice round (tax-revenue-spice * percentage-dist / count turtles)
@@ -237,8 +242,8 @@ to-report random-in-range [low high]
   report low + random (high - low + 1)
 end
 
-to-report welfare-eq [w1 w2 m1 m2] ;; 1 - sugar ; 2 - spice ;; agregar w3/m3 a través de una variable global
-  report w1 ^ (m1 / (m1 + m2)) * w2 ^ (m1 / (m1 + m2))
+to-report welfare-eq [w1 w2 w3 m1 m2 m3] ;; 1 - sugar ; 2 - spice ;; agregar w3/m3 a través de una variable global
+  report w1 ^ (m1 / (m1 + m2 + m3)) * w2 ^ (m1 / (m1 + m2 + m3)) * w3 ^ (m1 / (m1 + m2 + m3))
 end
 
 to-report mrs ;; turtle procedure
@@ -381,7 +386,7 @@ initial-population
 initial-population
 0
 1000
-102.0
+502.0
 1
 1
 NIL
@@ -451,10 +456,10 @@ NIL
 HORIZONTAL
 
 PLOT
-945
+930
 10
-1145
-160
+1130
+140
 Tax Revenue
 NIL
 NIL
